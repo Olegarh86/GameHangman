@@ -3,15 +3,15 @@ import java.util.*;
 
 public class GameHangman {
     private static final List<String> LIBRARY = new ArrayList<>();
-    private static final HangmanState[] hangman = HangmanState.values();
-    private static final Scanner scanner = new Scanner(System.in);
-    private static final Random random = new Random();
+    private static final HangmanState[] HANGMAN = HangmanState.values();
+    private static final Scanner SCANNER = new Scanner(System.in);
+    private static final Random RANDOM = new Random();
     private static final String MESSAGE_START_OR_RESET_GAME = "Нажми на кнопку \"Enter\" для начала игры или " +
             "\"Пробел + Enter\" если нет желания играть";
     private static final String PATH = "SecretWords.txt";
     private static final String STAR = "*";
     private static final int RUSSIAN_ALPHABET_LENGTH = 33;
-    private static Set<String> USED_LETTERS_SET;
+    private static List<String> usedLettersSet;
     private static int countOfMistakes;
     private String secretWord;
     private String mask;
@@ -31,24 +31,25 @@ public class GameHangman {
                         "у тебя на это будет %s попыток.\n", countOfMistakes);
                 if (!initLibrary().isEmpty()) {
                     GameHangman game = new GameHangman();
-                    USED_LETTERS_SET = new HashSet<>(RUSSIAN_ALPHABET_LENGTH);
-                    game.secretWord = game.chooseRandomSecretWord();
-                    game.mask = game.maskSecretWord(game);
+                    usedLettersSet = new ArrayList<>(RUSSIAN_ALPHABET_LENGTH);
+                    game.secretWord = chooseRandomSecretWord();
+                    game.mask = maskSecretWord(game);
+
                     while (checkAbilityToMove()) {
                         String newLetter = playerEnterLetter(game);
-                        if (game.validationEnteredLetter(newLetter)) {
-                            if (!game.addNewLetterToUsedLettersSet(game, newLetter)) {
+                        if (validationEnteredLetter(newLetter)) {
+                            if (!addNewLetterToUsedLettersSet(game, newLetter)) {
                                 if (game.secretWord.contains(newLetter)) {
                                     System.out.println("Есть такая буква в этом слове!");
-                                    game.mask = game.openNewLetterInMask(newLetter);
-                                    if (game.checkGameOver(game)) {
+                                    game.mask = openNewLetterInMask(game, newLetter);
+                                    if (checkGameOver(game)) {
                                         System.out.printf("Ты выиграл, молодец! правильное слово %s \n (#^_^#)\n", game.secretWord);
                                         break;
                                     }
                                 } else {
                                     countOfMistakes--;
-                                    System.out.println(hangman[countOfMistakes]);
-                                    if (game.checkGameOver(game)) {
+                                    System.out.println(HANGMAN[countOfMistakes]);
+                                    if (checkGameOver(game)) {
                                         System.out.printf("Ты проиграл, было загадано слово %s \n", game.secretWord);
                                     }
                                 }
@@ -76,7 +77,7 @@ public class GameHangman {
         System.out.printf("Поиграем в виселицу? %s\n", MESSAGE_START_OR_RESET_GAME);
         boolean isExit = true;
         while (isExit) {
-            String answer = scanner.nextLine();
+            String answer = SCANNER.nextLine();
             if ((answer).equalsIgnoreCase("")) {
                 isExit = false;
             } else if ((answer).equalsIgnoreCase(" ")) {
@@ -99,11 +100,11 @@ public class GameHangman {
         return LIBRARY;
     }
 
-    private String chooseRandomSecretWord() {
-        return LIBRARY.get(random.nextInt(LIBRARY.size())).toUpperCase();
+    private static String chooseRandomSecretWord() {
+        return LIBRARY.get(RANDOM.nextInt(LIBRARY.size())).toUpperCase();
     }
 
-    private String maskSecretWord(GameHangman game) {
+    private static String maskSecretWord(GameHangman game) {
         return STAR.repeat(game.secretWord.length());
     }
 
@@ -112,17 +113,17 @@ public class GameHangman {
                 Отгадай слово из %d букв: %s\s
                 Ты уже использовал буквы: %s\s
                 Введи 1 (одну) из 33 (тридцати трёх) букв русского языка, которая содержится в загаданном слове:\s
-                """, game.secretWord.length(), game.mask, USED_LETTERS_SET);
-        return scanner.nextLine().toUpperCase();
+                """, game.secretWord.length(), game.mask, usedLettersSet);
+        return SCANNER.nextLine().toUpperCase();
     }
 
-    private boolean validationEnteredLetter(String newLetter) {
+    private static boolean validationEnteredLetter(String newLetter) {
         return newLetter.matches("[А-Я]{1}");
     }
 
-    private boolean addNewLetterToUsedLettersSet(GameHangman game, String newLetter) {
-        if (!USED_LETTERS_SET.toString().contains(newLetter)) {
-            USED_LETTERS_SET.add(newLetter);
+    private static boolean addNewLetterToUsedLettersSet(GameHangman game, String newLetter) {
+        if (!usedLettersSet.contains(newLetter)) {
+            usedLettersSet.add(newLetter);
         } else {
             return true;
         }
@@ -133,11 +134,11 @@ public class GameHangman {
         return countOfMistakes > 0;
     }
 
-    private String openNewLetterInMask(String newLetter) {
-        char[] secretWordCharArray = secretWord.toCharArray();
-        char[] maskCharArray = mask.toCharArray();
+    private static String openNewLetterInMask(GameHangman game, String newLetter) {
+        char[] secretWordCharArray = game.secretWord.toCharArray();
+        char[] maskCharArray = game.mask.toCharArray();
         char symbol = newLetter.charAt(0);
-        for (int i = 0; i < secretWord.length(); i++) {
+        for (int i = 0; i < game.secretWord.length(); i++) {
             if (maskCharArray[i] == STAR.charAt(0) && secretWordCharArray[i] == symbol) {
                 maskCharArray[i] = symbol;
             }
@@ -145,7 +146,7 @@ public class GameHangman {
         return String.valueOf(maskCharArray);
     }
 
-    private boolean checkGameOver(GameHangman game) {
+    private static boolean checkGameOver(GameHangman game) {
         return !(game.mask.contains(STAR) && checkAbilityToMove());
     }
 }
