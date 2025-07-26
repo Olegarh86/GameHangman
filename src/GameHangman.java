@@ -99,20 +99,13 @@ public class GameHangman {
     private static void gameLoop() {
         while (checkGameOver()) {
             String newSymbol = playerEnterSymbol();
-            if (!newSymbol.matches("[А-ЯЁ]{1}")) {
-                printMessageForUser("Это не буква русского языка. Попробуй ввести заново, " +
-                        "у тебя получится, я верю в тебя!\n");
-                continue;
-            }
-            if (usedSymbols.contains(newSymbol)) {
-                printMessageForUser("Ты уже вводил такую букву, введи другую\n");
-                continue;
-            }
+            validationNewSymbol(newSymbol);
+            checkNewSymbolAlreadyUsed(newSymbol);
             usedSymbols.add(newSymbol);
             printMessageSuccess(newSymbol);
         }
-
         printFinalMessage();
+        startGame();
     }
 
     private static String playerEnterSymbol() {
@@ -121,6 +114,20 @@ public class GameHangman {
         return SCANNER.nextLine().toUpperCase();
     }
 
+    private static void validationNewSymbol(String newSymbol) {
+        if (!newSymbol.matches("[А-ЯЁ]{1}")) {
+            printMessageForUser("Это не буква русского языка. Попробуй ввести заново, " +
+                    "у тебя получится, я верю в тебя!\n");
+            gameLoop();
+        }
+    }
+
+    private static void checkNewSymbolAlreadyUsed(String newSymbol) {
+        if (usedSymbols.contains(newSymbol)) {
+            printMessageForUser("Ты уже вводил такую букву, введи другую\n");
+            gameLoop();
+        }
+    }
     private static void openNewSymbolInMask(String newSymbol) {
         char[] secretWordCharArray = secretWord.toCharArray();
         char[] maskCharArray = mask.toCharArray();
