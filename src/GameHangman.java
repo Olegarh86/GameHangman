@@ -2,19 +2,17 @@ import java.io.*;
 import java.util.*;
 
 public class GameHangman {
-    public static final String MESSAGE_WRONG = "Нет такой буквы в этом слове. Осталось ошибок: ";
-    private static final List<String> LIBRARY = new ArrayList<>();
-    private static final HangmanState[] HANGMAN = HangmanState.values();
     private static final Scanner SCANNER = new Scanner(System.in);
     private static final Random RANDOM = new Random();
+    private static final int RUSSIAN_ALPHABET_LENGTH = 33;
+    public static final String MESSAGE_WRONG = "Нет такой буквы в этом слове. Осталось ошибок: ";
     private static final String MESSAGE_START_OR_RESET_GAME = "Нажми на кнопку \"Enter\" для начала игры или " +
             "\"Пробел + Enter\" если нет желания играть";
     private static final String PATH = "SecretWords.txt";
     private static final String MASK_SYMBOL = "*";
-    private static final int RUSSIAN_ALPHABET_LENGTH = 33;
-    private static List<String> usedSymbols;
+    private static final int MAX_MISTAKES = 6;
     private static int countOfMistakes;
-    private static String secretWord;
+    private static final List<String> LIBRARY = new ArrayList<>();
     private static String mask;
 
     public static void main(String[] args) {
@@ -27,37 +25,41 @@ public class GameHangman {
 
     private static void startGame() {
         while (startOrResetGame()) {
-            countOfMistakes = 6;
-            printMessageForUser("Я загадаю существительное в именительном падеже, а ты попробуешь его угадать, " +
-                    "у тебя на это будет %s попыток.\n", countOfMistakes);
+            HangmanState[] hangman = HangmanState.values();
+            countOfMistakes = MAX_MISTAKES;
+            printMessageForUser(countOfMistakes);
             initLibrary();
             if (LIBRARY.isEmpty()) {
                 printMessageForUser("Мне неоткуда брать слова для загадывания. Чтобы начать играть ты должен мне помочь. " +
                         "Помести словарь со словами для загадывания \"SecretWords.txt\" в корневую папку проекта и запусти игру заново\n");
                 return;
             }
-            usedSymbols = new ArrayList<>(RUSSIAN_ALPHABET_LENGTH);
-            secretWord = chooseRandomSecretWord();
-            mask = maskingSecretWord();
-            gameLoop();
+
+            List<String> usedSymbols = new ArrayList<>(RUSSIAN_ALPHABET_LENGTH);
+            String secretWord = chooseRandomSecretWord();
+            mask = maskingSecretWord(secretWord);
+            gameLoop(hangman, usedSymbols, secretWord);
+            printFinalMessage(secretWord);
         }
-        printMessageForUser("Запусти меня заново как появится желание сыграть, я буду ждать!\n");
+        printMessageForUser("Запусти меня заново как появится желание поиграть, я буду ждать!\n");
     }
 
     private static void printMessageForUser(String message) {
         System.out.printf(message);
     }
 
-    private static void printMessageForUser(String message, int countOfMistakes) {
-        System.out.printf(message, countOfMistakes);
+    private static void printMessageForUser(int countOfMistakes) {
+        System.out.printf("Я загадаю существительное в именительном падеже, а ты попробуешь его угадать, " +
+                "у тебя на это будет %s попыток.\n", countOfMistakes);
     }
 
     private static void printMessageForUser(String message, String messageStartOrReset) {
         System.out.printf(message, messageStartOrReset);
     }
 
-    private static void printMessageForUser(String message, int length, String mask, List<String> usedSymbolsSet) {
-        System.out.printf(message, length, mask, usedSymbolsSet);
+    private static void printMessageForUser(int length, String mask, List<String> usedSymbolsSet) {
+        System.out.printf("Отгадай слово из %d букв: %s\nТы уже использовал буквы: %s\nВведи 1 (одну) из 33 (тридцати трёх) " +
+                "букв русского языка, которая содержится в загаданном слове: \n", length, mask, usedSymbolsSet);
     }
 
     private static boolean startOrResetGame() {
@@ -92,43 +94,47 @@ public class GameHangman {
         return word.toUpperCase();
     }
 
-    private static String maskingSecretWord() {
+    private static String maskingSecretWord(String secretWord) {
         return MASK_SYMBOL.repeat(secretWord.length());
     }
 
-    private static void gameLoop() {
+    private static void gameLoop(HangmanState[] hangman, List<String> usedSymbols, String secretWord) {
         while (checkGameOver()) {
-            String newSymbol = playerEnterSymbol();
-            validationNewSymbol(newSymbol);
-            checkNewSymbolAlreadyUsed(newSymbol);
+            String newSymbol = playerEnterSymbol(usedSymbols, secretWord);
+            if (!validationNewSymbol(newSymbol)) {
+                continue;
+            }
+            if (checkNewSymbolAlreadyUsed(usedSymbols, newSymbol)) {
+                continue;
+            }
             usedSymbols.add(newSymbol);
-            printMessageSuccess(newSymbol);
+            printMessageSuccess(hangman, newSymbol, secretWord);
         }
-        printFinalMessage();
-        startGame();
     }
 
-    private static String playerEnterSymbol() {
-        printMessageForUser("Отгадай слово из %d букв: %s\nТы уже использовал буквы: %s\nВведи 1 (одну) из " +
-                "33 (тридцати трёх) букв русского языка, которая содержится в загаданном слове: \n", secretWord.length(), mask, usedSymbols);
+    private static String playerEnterSymbol(List<String> usedSymbols, String secretWord) {
+        printMessageForUser(secretWord.length(), mask, usedSymbols);
         return SCANNER.nextLine().toUpperCase();
     }
 
-    private static void validationNewSymbol(String newSymbol) {
+    private static boolean validationNewSymbol(String newSymbol) {
         if (!newSymbol.matches("[А-ЯЁ]{1}")) {
             printMessageForUser("Это не буква русского языка. Попробуй ввести заново, " +
                     "у тебя получится, я верю в тебя!\n");
-            gameLoop();
+            return false;
         }
+        return true;
     }
 
-    private static void checkNewSymbolAlreadyUsed(String newSymbol) {
+    private static boolean checkNewSymbolAlreadyUsed(List<String> usedSymbols, String newSymbol) {
         if (usedSymbols.contains(newSymbol)) {
             printMessageForUser("Ты уже вводил такую букву, введи другую\n");
-            gameLoop();
+            return true;
         }
+        return false;
     }
-    private static void openNewSymbolInMask(String newSymbol) {
+
+    private static void openNewSymbolInMask(String newSymbol, String secretWord) {
         char[] secretWordCharArray = secretWord.toCharArray();
         char[] maskCharArray = mask.toCharArray();
         char symbol = newSymbol.charAt(0);
@@ -140,13 +146,13 @@ public class GameHangman {
         mask = String.valueOf(maskCharArray);
     }
 
-    private static void printMessageSuccess(String newSymbol) {
+    private static void printMessageSuccess(HangmanState[] hangman, String newSymbol, String secretWord) {
         if (secretWord.contains(newSymbol)) {
-            printMessageForUser("Есть такая буква в этом слове!\n");
-            openNewSymbolInMask(newSymbol);
+            printMessageForUser("Есть такая буква в этом слове!\n\n");
+            openNewSymbolInMask(newSymbol, secretWord);
         } else {
             countOfMistakes--;
-            printMessageForUser(MESSAGE_WRONG + countOfMistakes + HANGMAN[countOfMistakes].toString());
+            printMessageForUser(MESSAGE_WRONG + countOfMistakes + hangman[countOfMistakes].toString());
         }
     }
 
@@ -154,7 +160,7 @@ public class GameHangman {
         return (mask.contains(MASK_SYMBOL) && countOfMistakes > 0);
     }
 
-    private static void printFinalMessage() {
+    private static void printFinalMessage(String secretWord) {
         if (!mask.contains(MASK_SYMBOL)) {
             printMessageForUser("Ты выиграл, молодец! правильное слово %s \n (#^_^#)\n", secretWord);
         } else {
