@@ -48,7 +48,7 @@ public class Game {
     }
 
     private void gameLoop(List<String> usedSymbols) {
-        while (checkGameOver()) {
+        while (checkGameOver(secretWord)) {
             String newSymbol = playerEnterSymbol(usedSymbols);
             if (!validationNewSymbol(newSymbol)) {
                 continue;
@@ -90,7 +90,7 @@ public class Game {
         return false;
     }
 
-    private boolean checkGameOver() {
-        return (secretWord.getMask().contains(secretWord.getMASK_SYMBOL()) && countOfMistakes > 0);
+    private boolean checkGameOver(SecretWord secretWord) {
+        return (!secretWord.allLettersOpened() && countOfMistakes > 0);
     }
 }

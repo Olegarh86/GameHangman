@@ -17,7 +17,7 @@ public class Library {
     }
 
     private void initLibrary() {
-        String PATH = "SecretWords.txt";
+        final String PATH = "SecretWords.txt";
         try (BufferedReader reader = new BufferedReader(new FileReader(PATH))) {
             while (reader.ready()) {
                 LIBRARY.add(reader.readLine());

@@ -1,22 +1,26 @@
 public class SecretWord {
+    private static int countOfOpenedLetters;
+    private static int secretWordLength;
     private final String MASK_SYMBOL = "*";
     private final String secretWord;
     private String mask;
 
     protected SecretWord(Library library) {
-            this.secretWord = library.chooseRandomWord();
-            this.mask = MASK_SYMBOL.repeat(secretWord.length());
+        this.secretWord = library.chooseRandomWord();
+        secretWordLength = secretWord.length();
+        this.mask = MASK_SYMBOL.repeat(secretWord.length());
+            countOfOpenedLetters = 0;
     }
 
-    public String getSecretWord() {
+    protected String getSecretWord() {
         return secretWord;
     }
 
-    public String getMask() {
+    protected String getMask() {
         return mask;
     }
 
-    public String getMASK_SYMBOL() {
+    protected String getMASK_SYMBOL() {
         return MASK_SYMBOL;
     }
 
@@ -26,8 +30,13 @@ public class SecretWord {
         for (int i = 0; i < secretWord.length(); i++) {
             if (secretWord.charAt(i) == symbol) {
                 maskChars[i] = symbol;
+                countOfOpenedLetters++;
             }
         }
         mask = new String(maskChars);
+    }
+
+    protected boolean allLettersOpened() {
+        return countOfOpenedLetters == secretWordLength;
     }
 }
