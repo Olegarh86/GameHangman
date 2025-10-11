@@ -1,3 +1,4 @@
+import java.nio.file.Path;
 import java.util.List;
 
 public class Messages {
@@ -11,13 +12,13 @@ public class Messages {
         System.out.printf("Ой-ой-ой, срочно свяжись с разработчиком и сообщи ему что программа выдала ошибку: " + e);
     }
 
-    protected static void exceptionInitLibrary() {
-        System.out.print("Инициализация словаря закончилась ошибкой, файл не найден!\n");
+    protected static void exceptionInitLibrary(Path path) {
+        System.out.print("Инициализация словаря закончилась ошибкой, файл " + path.getFileName() + " не найден!\n");
     }
 
-    protected static void libraryIsEmpty() {
+    protected static void libraryIsEmpty(Path path) {
         System.out.print("Мне неоткуда брать слова для загадывания. Чтобы начать играть ты должен мне помочь. " +
-                "Помести словарь со словами для загадывания \"SecretWords.txt\" в корневую папку проекта и запусти игру заново\n");
+                "Помести словарь со словами для загадывания " + path.getFileName() + " по адресу " + path.getParent() + " и запусти игру заново\n");
     }
 
     protected void printFinalMessage(SecretWord secretWord) {
